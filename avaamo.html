@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script type="text/javascript">
+
+console.log("start");
+let url = 'https://norvig.com/big.txt';
+let proxyurl = "https://cors-anywhere.herokuapp.com/"; // for headers
+let url2 = "https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=dict.1.1.20170610T055246Z.0f11bdc42e7b693a.eefbde961e10106a4efa7d852287caa49ecc68cf&lang=en-ru&text=time";
+
+var doc;
+fetch( proxyurl + url, {
+		headers:{
+					"Access-Control-Allow-Origin": "*"
+				}
+		}
+ )
+.then(response => response.text())
+.then(text => {
+		doc=text;
+		console.log("word occurrences (is) ",(doc.match(/is/g)).length);
+		twoAndThree();
+	})
+.catch(err => { throw err });
+
+
+function twoAndThree(){
+
+var json ;
+var array = [];	
+fetch(url2).
+then(res=> res.json())
+.then(j => {
+	var words = bagOfWords(doc);
+	json=j;
+	var times;
+	for (index = 0; index < words.length; index++)   
+	{	
+		var regex = new RegExp( words[index] , "g");
+		times = doc.match(regex).length;
+		var syndata = [];
+		var posdata = [];
+		console.log(words[index]);
+		for(var i=0; i<json.def.length;i++){
+			if('time'==json.def[i].text){
+				if(json.def[i].tr[0].syn != undefined){
+					for(var j=0; j<json.def[i].tr[0].syn.length;j++){
+						console.log("synonyms  ",json.def[i].tr[0].syn[j].text);
+						syndata.push({text: json.def[i].tr[0].syn[j].text});
+					}		
+				}
+				if(json.def[i].tr[0].mean != undefined){
+					for(var j=0; j<json.def[i].tr[0].mean.length;j++){
+						console.log("meaning  ",json.def[i].tr[0].mean[j].text);
+						
+					}		
+				}
+			}
+			if(json.def[i].pos != undefined){
+				console.log("pos ",json.def[i].pos);
+				posdata.push({text: json.def[i].pos});
+			}	
+		}
+		array.push({
+				text: words[index],
+				count: times,
+				syn:syndata,
+				pos:posdata
+		});
+	}
+	console.log(array);
+})
+.catch(err => { throw err });	
+	
+
+
+ };
+ 
+ 
+function bagOfWords(text) {
+	var bag = text.
+              toLowerCase().
+			  replace(/[^a-zA-Z ]/g, ' ').
+			  replace(/ a /g, ' ').
+			  replace(/ the /g, ' ').
+			  replace(/ is /g, ' ').
+			  replace(/ at /g, ' ').
+			  replace(/ was /g, ' ').
+			  replace(/ were /g, ' ').
+			  replace(/ be /g, ' ').
+			  replace(/ to /g, ' ').
+			  replace(/ for /g, ' ').
+			  replace(/ of /g, ' ').
+			  replace(/ with /g, ' ').
+			  replace(/ and /g, ' ').
+			  replace(/ on /g, ' ').
+			  replace(/ in /g, ' ').
+			  replace(/ as /g, ' ').
+			  replace(/ it /g, ' ').
+			  replace(/ are /g, ' ').
+              split(/\s+/).
+              sort(),
+    clone = bag.slice();  //needed because sort changes the array in place  	  
+	return bag.
+           sort(function(a, b) { //sort in reverse order of occurrence
+    	     return (clone.lastIndexOf(b) - clone.indexOf(b) + 1) -
+     	            (clone.lastIndexOf(a) - clone.indexOf(a) + 1);
+					
+					console.log("sssss");
+    	   }).
+           filter(function(word, idx) { //remove duplicates
+             return bag.indexOf(word) === idx;
+           }).
+           slice(0, 10);  //first 10 elements
+}
+</script>
+
+<p>My first paragraph.</p>
+
+</body>
+</html>
